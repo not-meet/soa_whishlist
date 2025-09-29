@@ -1,103 +1,181 @@
-import Image from "next/image";
+"use client"
+import { AuroraText } from "@/components/ui/aurora-text";
+import { Highlighter } from "@/components/ui/highlighter";
+import { TypewriterEffectSmooth } from "@/components/ui/typewriter-effect";
+import { WavyBackground } from "@/components/ui/wavy-background";
+import confetti from "canvas-confetti";
+import React, { useState } from "react";
 
 export default function Home() {
-  return (
-    <div className="font-sans grid grid-rows-[20px_1fr_20px] items-center justify-items-center min-h-screen p-8 pb-20 gap-16 sm:p-20">
-      <main className="flex flex-col gap-[32px] row-start-2 items-center sm:items-start">
-        <Image
-          className="dark:invert"
-          src="/next.svg"
-          alt="Next.js logo"
-          width={180}
-          height={38}
-          priority
-        />
-        <ol className="font-mono list-inside list-decimal text-sm/6 text-center sm:text-left">
-          <li className="mb-2 tracking-[-.01em]">
-            Get started by editing{" "}
-            <code className="bg-black/[.05] dark:bg-white/[.06] font-mono font-semibold px-1 py-0.5 rounded">
-              app/page.tsx
-            </code>
-            .
-          </li>
-          <li className="tracking-[-.01em]">
-            Save and see your changes instantly.
-          </li>
-        </ol>
+  const [email, setEmail] = useState('');
+  const [loading, setLoading] = useState(false);
+  const [message, setMessage] = useState('');
+  const [error, setError] = useState('');
 
-        <div className="flex gap-4 items-center flex-col sm:flex-row">
-          <a
-            className="rounded-full border border-solid border-transparent transition-colors flex items-center justify-center bg-foreground text-background gap-2 hover:bg-[#383838] dark:hover:bg-[#ccc] font-medium text-sm sm:text-base h-10 sm:h-12 px-4 sm:px-5 sm:w-auto"
-            href="https://vercel.com/new?utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-            target="_blank"
-            rel="noopener noreferrer"
-          >
-            <Image
-              className="dark:invert"
-              src="/vercel.svg"
-              alt="Vercel logomark"
-              width={20}
-              height={20}
+  const triggerConfetti = () => {
+    const end = Date.now() + 2 * 1000; // 2 seconds
+    const colors = ["#ffd600", "#17edc6", "#FA7D51"];
+
+    const frame = () => {
+      if (Date.now() > end) return;
+
+      confetti({
+        particleCount: 2,
+        angle: 60,
+        spread: 55,
+        startVelocity: 60,
+        origin: { x: 0, y: 0.5 },
+        colors: colors,
+      });
+      confetti({
+        particleCount: 2,
+        angle: 120,
+        spread: 55,
+        startVelocity: 60,
+        origin: { x: 1, y: 0.5 },
+        colors: colors,
+      });
+
+      requestAnimationFrame(frame);
+    };
+
+    frame();
+  };
+
+  const validateEmail = (email: string) => {
+    // Simple email validation regex
+    const re = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+    return re.test(email);
+  };
+
+  const handleSubmit = async () => {
+    if (!email) {
+      setError('Please enter your email address');
+      return;
+    }
+
+    if (!validateEmail(email)) {
+      setError('Please enter a valid email address (e.g., yourname@example.com)');
+      return;
+    }
+
+    setLoading(true);
+    setError('');
+    setMessage('');
+
+    try {
+      const response = await fetch('/api/waitlist', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({ email }),
+      });
+
+      const data = await response.json();
+
+      if (!response.ok) {
+        setError(data.error || 'Something went wrong');
+      } else {
+        setMessage('Thanks a lot ! we\'ll see you on the other side ! ');
+        setEmail('');
+        // Trigger confetti on success
+        triggerConfetti();
+      }
+    } catch (err) {
+      setError('Failed to join waitlist. Please try again.');
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const words = [
+    {
+      text: "Just select, choose your requirments and done!",
+    },
+    {
+      text: "Your go to auth solution for your next big project!",
+    },
+    {
+      text: "all you need is to arrange the envs and done!",
+    },
+    {
+      text: "want auth!? let SOA handle it!",
+    },
+  ];
+
+  return (
+    <>
+      <div className="flex items-center justify-center min-h-screen px-4">
+        <div className="max-w-4xl mx-auto text-center">
+          {/* Main heading */}
+          <AuroraText colors={["#fafafa", "#e0e0e0", "#bdbdbd"]} className="font-fjalla_one text-4xl md:text-4xl text-gray-100 mb-4 font-extrabold">
+            Setting up auth made so simple that anyone can do it in{" "}
+            <AuroraText colors={["#FA7D51", "#0535f4", "#FA76F2", "#68EDE9"]} className="font-fjalla_one text-4xl md:text-4xl text-gray-100 mb-4 font-extrabold">
+              <span className="text-gray-100">Minutes!</span>
+            </AuroraText>
+          </AuroraText>
+          {/* Subheading */}
+          <TypewriterEffectSmooth words={words} className="font-inter text-xl md:text-2xl text-gray-300 mb-8" />
+          {/* CTA */}
+          <p className="font-inter text-2xl md:text-3xl text-gray-400 font-bold mb-6">
+            Be the first to experience {""}
+            <span className="font-inter text-2xl md:text-3xl text-gray-200 font-bold mb-6">
+              <Highlighter delay={3000} isView={true} iterations={3} action="underline" color="#17edc6" >SOA</Highlighter>
+            </span>
+          </p>
+          {/* Email input and button */}
+          <div className="flex gap-3 max-w-md mx-auto mb-2">
+            <input
+              type="email"
+              value={email}
+              onChange={(e) => {
+                setEmail(e.target.value);
+                // Clear error when user starts typing again
+                if (error) setError('');
+              }}
+              onKeyDown={(e) => e.key === 'Enter' && handleSubmit()}
+              placeholder="yourname@example.com"
+              disabled={loading}
+              className="font-inter flex-1 px-4 py-3 border ring-none hover:ring-[#242424] focus:ring-[#242424] rounded-lg text-[#17edc6] placeholder-gray-500 focus:outline-none border-[#242424] focus:border-gray-500 disabled:opacity-50 disabled:cursor-not-allowed"
+              aria-invalid={!!error}
+              aria-describedby="email-error"
             />
-            Deploy now
-          </a>
-          <a
-            className="rounded-full border border-solid border-black/[.08] dark:border-white/[.145] transition-colors flex items-center justify-center hover:bg-[#f2f2f2] dark:hover:bg-[#1a1a1a] hover:border-transparent font-medium text-sm sm:text-base h-10 sm:h-12 px-4 sm:px-5 w-full sm:w-auto md:w-[158px]"
-            href="https://nextjs.org/docs?utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-            target="_blank"
-            rel="noopener noreferrer"
-          >
-            Read our docs
-          </a>
+            <button
+              onClick={handleSubmit}
+              disabled={loading}
+              className="relative bg-[gray]/10 font-inter text-white font-bold dark:bg-[gray]/10 border-2 border-[#242424] dark:border-[#242424] hover:border-[#242424] dark:hover:border-[#242424] rounded-xl px-4 py-3 transition-all duration-300 hover:shadow-lg hover:scale-105 disabled:opacity-50 disabled:cursor-not-allowed disabled:hover:scale-100 min-w-[140px]"
+            >
+              {loading ? (
+                <div className="flex items-center justify-center gap-2">
+                  <div className="w-4 h-4 border-2 border-white/30 border-t-white rounded-full animate-spin"></div>
+                  <span>Joining...</span>
+                </div>
+              ) : (
+                'Join Waitlist'
+              )}
+            </button>
+          </div>
+
+          {/* Success/Error Messages */}
+          {message && (
+            <p className="font-inter text-sm text-green-400 mt-2 animate-fade-in">
+              {message}
+            </p>
+          )}
+          {error && (
+            <p id="email-error" className="font-inter text-sm text-red-400 mt-2 animate-fade-in">
+              {error}
+            </p>
+          )}
+
+          {/* Privacy note */}
+          <p className="inter text-sm text-gray-500 mt-2">
+            No spam, just updates on our launch. Unsubscribe anytime.
+          </p>
         </div>
-      </main>
-      <footer className="row-start-3 flex gap-[24px] flex-wrap items-center justify-center">
-        <a
-          className="flex items-center gap-2 hover:underline hover:underline-offset-4"
-          href="https://nextjs.org/learn?utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-          target="_blank"
-          rel="noopener noreferrer"
-        >
-          <Image
-            aria-hidden
-            src="/file.svg"
-            alt="File icon"
-            width={16}
-            height={16}
-          />
-          Learn
-        </a>
-        <a
-          className="flex items-center gap-2 hover:underline hover:underline-offset-4"
-          href="https://vercel.com/templates?framework=next.js&utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-          target="_blank"
-          rel="noopener noreferrer"
-        >
-          <Image
-            aria-hidden
-            src="/window.svg"
-            alt="Window icon"
-            width={16}
-            height={16}
-          />
-          Examples
-        </a>
-        <a
-          className="flex items-center gap-2 hover:underline hover:underline-offset-4"
-          href="https://nextjs.org?utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-          target="_blank"
-          rel="noopener noreferrer"
-        >
-          <Image
-            aria-hidden
-            src="/globe.svg"
-            alt="Globe icon"
-            width={16}
-            height={16}
-          />
-          Go to nextjs.org →
-        </a>
-      </footer>
-    </div>
-  );
+      </div>
+      <WavyBackground waveWidth={70} className="z-[-1]" />
+    </>
+  )
 }

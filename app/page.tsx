@@ -175,7 +175,7 @@ export default function Home() {
           </p>
         </div>
       </div>
-      {/* <WavyBackground waveWidth={70} className="z-[-1]" /> */}
+      <WavyBackground waveWidth={70} className="z-[-1]" />
     </>
   )
 }
